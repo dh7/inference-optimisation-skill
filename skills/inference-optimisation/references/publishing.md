@@ -33,6 +33,10 @@ A tuned config is only useful if someone else can rebuild it and get the same re
 - Also check **vision** if the model has it, plus a **concurrent full-length soak** if the recipe advertises N users at full context.
 - Gate the same config more than once if acceptance ramps up (draft methods with warm-up). Never publish a "validated" result from a single wave.
 - Record peak memory: driver residency plus anon on unified memory.
+- **Agent tasks (optional, recommended for lossy recipes).** The gates above prove the server answers; they do not prove an agent on top of it still finishes real work. Run a code-graded agent benchmark through a harness (opencode, hermes, ...) whose model is the clean build, and the same harness and version on the baseline. Publish the pass count and the end-to-end wall time with the harness name.
+  - Example: the [airbench.ai](https://airbench.ai) quick test, 15 challenges (math, vision, code), graded server-side. An agent registers itself for a test key with a one-second proof of work and reads back `passed / total / wallTimeMs`; the [`local-inference-optimisation`](https://github.com/dh7/airbench-skills) skill wraps it. The orchestrating agent must hand the briefing to the harness and never solve the challenges itself.
+  - Agent runs are noisy: the same config can move by several challenges, because the harness compacts or stalls differently each time. Run each config at least twice, alternating order, and reject when the candidate's best run is below the control's worst. Treat it as a gate, not as a hill-climb metric.
+  - Measured example: RTX 5090, Qwen3.8-27B NVFP4, vLLM 0.27.1. `--kv-cache-dtype fp8` vs `auto` gave the same c1 decode (86.7 vs 86.9 tok/s) and +3.5% KV tokens, and scored 9 and 13 /15 against 14 and 15. Rejected.
 
 ## 5. Prove the published build equals the best
 
